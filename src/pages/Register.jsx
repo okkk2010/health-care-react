@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { apiService } from '../services/api';
 
 const roles = ['patient', 'doctor'];
 const specialty = ['신경과', '외과', '소아과'];
 
-const SignUp = () => {
+const Register = () => {
     const [currentRole, setCurrentRole] = useState(roles[0]);
     const [currentSpecialty, setCurrentSpecialty] = useState('');
 
@@ -12,10 +13,6 @@ const SignUp = () => {
         email: '',
         name: '',
         password: ''
-    })
-
-    useEffect(() => {
-        console.log(currentRole);
     });
 
     const handleChange = (e) => {
@@ -28,6 +25,7 @@ const SignUp = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         
+        let response;
         if (currentRole === 'doctor') {
             const payload = {
                 email: form.email,
@@ -37,6 +35,7 @@ const SignUp = () => {
                 role: currentRole
             }
             console.log(payload);
+            response = await apiService.doctorRegister(payload);
         } else {
             const payload = {
                 email: form.email,
@@ -45,6 +44,13 @@ const SignUp = () => {
                 role: currentRole
             }
             console.log(payload);
+            response = await apiService.patientRegister(payload);
+        }
+
+        if (response.status === 200) {
+            alert('회원가입 성공');
+        } else {
+            alert(response.data.message);
         }
     }
 
@@ -79,4 +85,4 @@ const SignUp = () => {
     )
 }
 
-export default SignUp;
+export default Register;
