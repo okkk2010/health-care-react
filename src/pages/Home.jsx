@@ -1,9 +1,9 @@
-import { Link } from 'react-router-dom'
+import TempSection from '../components/common/TempSection'
 
 const Home = () => {
     return (
         <div>
-            <h1>home</h1>
+            <TempSection comment="임시 페이지 컴포넌트" />
         </div>
     )
 }
