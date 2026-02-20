@@ -78,6 +78,14 @@ export const apiService = {
     //appointment
     bookAppointment: async (payload) => {
         return await api.post("/api/appointments/book", payload);
+    },
+
+    myAppointment: async (email) => {
+        return await api.get(`/api/appointments/my?email=${email}`);
+    },
+
+    doctorAppointment: async (email) => {
+        return await api.get(`/api/appointments/doctor?email=${email}`);
     }
 };
 

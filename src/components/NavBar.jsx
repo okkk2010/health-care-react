@@ -3,7 +3,18 @@ import storageService from '../services/storage';
 
 const NavBar = ({ isLogin }) => {
 
+    const role = storageService.getRole();
 
+    const roleMenus = {
+        "의사" : [
+            { to: '/CheckAppointments', label: '예약 확인' },
+            { to: '/CurrentAppointments', label: '현재 예약' }
+        ],
+        "환자" : [
+            { to: '/MedicalAppointment', label: '예약하기' },
+            { to: '/MyAppointment', label: '예약 확인' }
+        ],
+    };
 
     return (
         <section className='fixed top-0 left-0 right-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur-sm'>
@@ -17,27 +28,11 @@ const NavBar = ({ isLogin }) => {
 
                 {
                     isLogin && (
-                        localStorage.getItem('role') === '의사' && (
-                            <>
-                                <Link to='/CheckAppointments' className='px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300'>
-                                    예약 확인
-                                </Link>
-                                <Link to='/CurrentAppointments' className='px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300'>
-                                    현재 예약
-                                </Link>
-                            </>
-                        ),
-
-                        localStorage.getItem('role') === '환자' && (
-                            <>
-                                <Link to='/MedicalAppointment' className='px-4 py-2 text-sm font-semibold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300'>
-                                    예약하기
-                                </Link>
-                                <Link to='/MyAppointments' className='px-4 py-2 text-sm font-semibold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300'>
-                                    예약 확인
-                                </Link>
-                            </>
-                        )
+                        (roleMenus[role] ?? []).map((menu) => (
+                            <Link key={menu.to} to={menu.to} className='rounded-md px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300'>
+                                {menu.label}
+                            </Link>
+                        ))
                     )
                 }
 
