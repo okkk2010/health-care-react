@@ -8,6 +8,8 @@ import Register from './pages/Register'
 import NavBar from './components/NavBar'
 import MyPage from './pages/MyPage'
 import storageService from './services/storage'
+import MedicalAppointment from './pages/patient/MedicalAppointment'
+import Appointment from './pages/Appointment'
 import './App.css'
 
 function App() {
@@ -22,6 +24,8 @@ function App() {
         <Route path='/Login' element={<Login setIsLogin={setIsLogin} />} />
         <Route path='/Register' element={<Register />} />
         <Route path='/MyPage' element={<MyPage setIsLogin={setIsLogin} />} />
+        <Route path='/MedicalAppointment' element={<MedicalAppointment />} />
+        <Route path='/MedicalAppointment/Appointment' element={<Appointment />} />
       </Routes>
     </BrowserRouter>
   )

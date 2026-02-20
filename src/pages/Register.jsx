@@ -40,9 +40,9 @@ const Register = () => {
                 if (specList.length > 0) {
                     setCurrentSpecialty(specList[0]);
                 }
-                console.log('珥덇린 ?곗씠??濡쒕뱶 ?깃났');
+                console.log('초기 데이터 로드 완료');
             } catch (e) {
-                console.error('珥덇린 ?곗씠??濡쒕뱶 ?ㅽ뙣:', e);
+                console.error('초기 데이터 로드 실패:', e);
             } finally {
                 setLoading(false);
             }
@@ -67,7 +67,7 @@ const Register = () => {
             const roleRes = await apiService.getRoleByName(currentRole);
             const roleCode = roleRes.data.data;
 
-            if (currentRole === '?섏궗') {
+            if (currentRole === '의사') {
                 const specRes = await apiService.getSpecialtyByName(currentSpecialty);
                 const specialtyData = specRes.data.data;
 
@@ -92,14 +92,14 @@ const Register = () => {
             }
 
             if (response.data?.statusCode === 201 || response.status === 201 || response.status === 200) {
-                alert('?뚯썝媛???깃났');
+                alert('회원가입 성공');
                 return;
             }
 
-            alert(response.data?.message ?? '?붿껌 泥섎━ ?ㅽ뙣');
+            alert(response.data?.message ?? '회원가입 실패');
         } catch (error) {
             const status = error?.status ?? error?.statusCode ?? 500;
-            const message = error?.message ?? '?붿껌 泥섎━ 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎.';
+            const message = error?.message ?? '';
             alert(`[${status}] ${message}`);
             console.error('register error:', error);
         }
@@ -136,7 +136,7 @@ const Register = () => {
                                 className='w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-800 outline-none transition focus:border-blue-500 focus:bg-white'/></p>
                         </div>
                         <div>
-                            { currentRole === '?섏궗' &&
+                            { currentRole === '의사' &&
                                 <select value={currentSpecialty} onChange={(e) => setCurrentSpecialty(e.target.value)}>
                                     {specialties?.map((exp) => {
                                         return <option key={exp} value={exp}>{exp}</option>

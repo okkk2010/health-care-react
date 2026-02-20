@@ -1,4 +1,4 @@
-import axios from "axios";
+﻿import axios from "axios";
 
 const api = axios.create({
   baseURL: "http://localhost:8080",
@@ -24,42 +24,61 @@ api.interceptors.response.use(
 );
 
 export const apiService = {
-  login: async (payload) => {
-    return await api.post("/api/users/login", payload);
-  },
+    //user
+    login: async (payload) => {
+        return await api.post("/api/users/login", payload);
+    },
 
-  doctorRegister: async (payload) => {
-    return await api.post("/api/doctors/register", payload);
-  },
+    //register
+    doctorRegister: async (payload) => {
+        return await api.post("/api/doctors/register", payload);
+    },
 
-  patientRegister: async (payload) => {
-    return await api.post("/api/patients/register", payload);
-  },
+    patientRegister: async (payload) => {
+        return await api.post("/api/patients/register", payload);
+    },
 
-  getRolesAll: async () => {
-    return await api.get("/api/roles/all");
-  },
+    //doctor
+    getDoctorsAll: async () => {
+        return await api.get("/api/doctors/all");
+    },
 
-  getRoleByCode: (code) => {
-    return api.get(`/api/roles/by-code?code=${code}`);
-  },
+    //patient
+    getPatientsAll: async () => {
+        return await api.get("/api/patients/all");
+    },
 
-  getRoleByName: (name) => {
-    return api.get(`/api/roles/by-name?name=${name}`);
-  },
+    //role
+    getRolesAll: async () => {
+        return await api.get("/api/roles/all");
+    },
 
-  getSpecialtiesAll: () => {
-    return api.get("/api/specialties/all");
-  },
+    getRoleByCode: (code) => {
+        return api.get(`/api/roles/by-code?code=${code}`);
+    },
 
-  getSpecialtyByCode: (code) => {
-    return api.get(`/api/specialties/by-code?code=${code}`);
-  },
+    getRoleByName: (name) => {
+        return api.get(`/api/roles/by-name?name=${name}`);
+    },
 
-  getSpecialtyByName: (name) => {
-    console.log("API 호출 - 전공 이름:", name);
-    return api.get(`/api/specialties/by-name?name=${name}`);
-  },
+    //specialty
+    getSpecialtiesAll: () => {
+        return api.get("/api/specialties/all");
+    },
+
+    getSpecialtyByCode: async (code) => {
+        return await api.get(`/api/specialties/by-code?code=${code}`);
+    },
+
+    getSpecialtyByName: (name) => {
+        console.log("API 호출 - 전공 이름:", name);
+        return api.get(`/api/specialties/by-name?name=${name}`);
+    },
+
+    //appointment
+    bookAppointment: async (payload) => {
+        return await api.post("/api/appointments/book", payload);
+    }
 };
 
 export default api;
