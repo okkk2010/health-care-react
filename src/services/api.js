@@ -24,8 +24,8 @@ export const apiService = {
         return api.get("/api/roles/all");
     },
 
-    getRoleByCode: (code) => {
-        return api.get(`/api/roles/${code}`);
+    getRoleByCode: async (code) => {
+        return await api.get(`/api/roles/${code}`);
     },
 
     getSpecialtiesAll: () => {

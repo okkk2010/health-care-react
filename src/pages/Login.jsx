@@ -1,9 +1,13 @@
-﻿import { Link } from 'react-router-dom';
+﻿import { Link, useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
 
 import { apiService } from '../services/api';
+import storageService from '../services/storage';
 
-const Login = () => {
+const Login = ( { setIsLogin } ) => {
+
+    const navigate = useNavigate();
+
     const [form, setForm] = useState({
         email: '',
         password: ''
@@ -22,10 +26,14 @@ const Login = () => {
             email: form.email,
             password: form.password
         }
-        console.log(payload);
         const response = await apiService.login(payload);
         if (response.status === 200) {
             alert('Login success');
+            const { email, name, roleCode } = response.data.data;
+            const roleResponse = await apiService.getRoleByCode(roleCode);
+            storageService.login(email, name, roleResponse?.data.data);
+            setIsLogin(true);
+            navigate('/');
         } else {
             alert(response.data.message);
         }
