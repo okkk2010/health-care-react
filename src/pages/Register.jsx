@@ -1,12 +1,17 @@
-import { useState } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { apiService } from '../services/api';
 
-const roles = ['patient', 'doctor'];
-const specialty = ['신경과', '외과', '소아과'];
+
 
 const Register = () => {
-    const [currentRole, setCurrentRole] = useState(roles[0]);
+
+    const [roles, setRoles] = useState([]);
+    const [specialties, setSpecialties] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+
+    const [currentRole, setCurrentRole] = useState('');
     const [currentSpecialty, setCurrentSpecialty] = useState('');
 
     const [form, setForm] = useState({
@@ -14,6 +19,37 @@ const Register = () => {
         name: '',
         password: ''
     });
+
+    useEffect(() => {
+        const fetchInitData = async () => {
+            try {
+                const [rolesRes, specsRes] = await Promise.all([
+                    apiService.getRolesAll(),
+                    apiService.getSpecialtiesAll(),
+                ]);
+
+                const roleList = rolesRes.data.data ?? [];
+                const specList = specsRes.data.data ?? [];
+
+                setRoles(roleList);
+                setSpecialties(specList);
+
+                if (roleList.length > 0) {
+                    setCurrentRole(roleList[0]);
+                }
+                if (specList.length > 0) {
+                    setCurrentSpecialty(specList[0]);
+                }
+                console.log('珥덇린 ?곗씠??濡쒕뱶 ?깃났');
+            } catch (e) {
+                console.error('珥덇린 ?곗씠??濡쒕뱶 ?ㅽ뙣:', e);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        fetchInitData();
+    }, []);
 
     const handleChange = (e) => {
         setForm({
@@ -24,36 +60,50 @@ const Register = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        let response;
-        if (currentRole === 'doctor') {
-            const payload = {
-                email: form.email,
-                name: form.name,
-                password: form.password,
-                specialty: currentSpecialty,
-                role: currentRole
-            }
-            console.log(payload);
-            response = await apiService.doctorRegister(payload);
-        } else {
-            const payload = {
-                email: form.email,
-                name: form.name,
-                password: form.password,
-                role: currentRole
-            }
-            console.log(payload);
-            response = await apiService.patientRegister(payload);
-        }
 
-        if (response.status === 200) {
-            alert('회원가입 성공');
-        } else {
-            alert(response.data.message);
+        try {
+            let response;
+
+            const roleRes = await apiService.getRoleByName(currentRole);
+            const roleCode = roleRes.data.data;
+
+            if (currentRole === '?섏궗') {
+                const specRes = await apiService.getSpecialtyByName(currentSpecialty);
+                const specialtyData = specRes.data.data;
+
+                const payload = {
+                    email: form.email,
+                    name: form.name,
+                    password: form.password,
+                    specialtyCode: specialtyData,
+                    roleCode: roleCode
+                }
+                console.log(payload);
+                response = await apiService.doctorRegister(payload);
+            } else {
+                const payload = {
+                    email: form.email,
+                    name: form.name,
+                    password: form.password,
+                    roleCode: roleCode
+                }
+                console.log(payload);
+                response = await apiService.patientRegister(payload);
+            }
+
+            if (response.data?.statusCode === 201 || response.status === 201 || response.status === 200) {
+                alert('?뚯썝媛???깃났');
+                return;
+            }
+
+            alert(response.data?.message ?? '?붿껌 泥섎━ ?ㅽ뙣');
+        } catch (error) {
+            const status = error?.status ?? error?.statusCode ?? 500;
+            const message = error?.message ?? '?붿껌 泥섎━ 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎.';
+            alert(`[${status}] ${message}`);
+            console.error('register error:', error);
         }
     }
-
     return (
         <main className = 'min-h-screen bg-[#eef2f7] px-4 pb-8 pt-28  '>
             <section className = 'shadow-sm mx-auto w-full max-w-md rounded-3xl border border-slate-100 bg-white p-8 '>
@@ -65,7 +115,7 @@ const Register = () => {
                             <select value= {currentRole} onChange = {(e) => setCurrentRole(e.target.value)} 
                                 className='w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-800 outline-none transition focus:border-blue-500 focus:bg-white'>
 
-                                {roles.map((role) => {
+                                {roles?.map((role) => {
                                     return <option key = {role} value = {role}>{role}</option>
                                 })}
                             </select>
@@ -86,9 +136,9 @@ const Register = () => {
                                 className='w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-800 outline-none transition focus:border-blue-500 focus:bg-white'/></p>
                         </div>
                         <div>
-                            { currentRole === 'doctor' &&
+                            { currentRole === '?섏궗' &&
                                 <select value={currentSpecialty} onChange={(e) => setCurrentSpecialty(e.target.value)}>
-                                    {specialty.map((exp) => {
+                                    {specialties?.map((exp) => {
                                         return <option key={exp} value={exp}>{exp}</option>
                                     })}
                                 </select>
