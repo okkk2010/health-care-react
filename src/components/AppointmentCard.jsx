@@ -1,10 +1,13 @@
-﻿const AppointmentCard = ({ appointment }) => {
+import { Link } from 'react-router-dom';
+
+const AppointmentCard = ({ appointment }) => {
     const doctorName = appointment?.doctorName ?? '-';
     const doctorSpecialty = appointment?.doctorSpecialty ?? '-';
     const title = appointment?.title ?? '-';
     const detail = appointment?.detail ?? '-';
     const appointmentTime = appointment?.appointmentTime ?? '-';
-    const meetingLink = appointment?.meetingLink ?? '#';
+    const appointmentCode = appointment?.appointmentCode;
+    const hasCode = Boolean(appointmentCode);
 
     return (
         <article className='mb-4 rounded-3xl border border-slate-200 bg-slate-100 p-4 shadow-sm'>
@@ -37,12 +40,22 @@
                     </div>
                 </div>
 
-                <a
-                    href={meetingLink}
-                    className='inline-flex h-12 items-center justify-center rounded-md bg-slate-200 px-6 text-base font-medium text-slate-900 transition hover:bg-slate-300'
-                >
-                    화상 회의 참여
-                </a>
+                {hasCode ? (
+                    <Link
+                        to={`/video/visitor/${appointmentCode}`}
+                        className='inline-flex h-12 items-center justify-center rounded-md bg-slate-200 px-6 text-base font-medium text-slate-900 transition hover:bg-slate-300'
+                    >
+                        화상 회의 참여
+                    </Link>
+                ) : (
+                    <button
+                        type='button'
+                        disabled
+                        className='inline-flex h-12 cursor-not-allowed items-center justify-center rounded-md bg-slate-300 px-6 text-base font-medium text-slate-600'
+                    >
+                        코드 없음
+                    </button>
+                )}
             </div>
         </article>
     );

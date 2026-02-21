@@ -1,8 +1,7 @@
-﻿import AppointmentCard from '../../components/AppointmentCard';
+import AppointmentCard from '../../components/AppointmentCard';
 import { apiService } from '../../services/api';
 import { useState, useEffect } from 'react';
 import storageService from '../../services/storage';
-
 
 const MyAppointment = () => {
     const [appointments, setAppointments] = useState([]);
@@ -13,15 +12,19 @@ const MyAppointment = () => {
                 const email = storageService.getEmail();
                 const response = await apiService.myAppointment(email);
                 if (response.status === 200) {
-                    setAppointments(response.data.data);
+                    const normalized = (response.data.data ?? []).map((appointment) => ({
+                        ...appointment,
+                        appointmentCode: appointment.appointmentCode,
+                    }));
+                    setAppointments(normalized);
                 }
             } catch (error) {
-                console.error("나의 예약 조회 실패:", error);
+                console.error('나의 예약 조회 실패:', error);
             }
-        }
+        };
+
         fetchMyAppointments();
     }, []);
-
 
     return (
         <main className='min-h-screen bg-[#eef2f7] px-4 pb-8 pt-28'>

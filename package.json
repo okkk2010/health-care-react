@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "dev:signal": "npm run dev --prefix server",
+    "start:signal": "npm start --prefix server"
   },
   "dependencies": {
     "autoprefixer": "^10.4.24",
@@ -16,6 +18,7 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.13.0",
+    "socket.io-client": "^4.8.1",
     "tailwindcss": "^4.2.0"
   },
   "devDependencies": {
