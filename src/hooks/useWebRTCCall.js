@@ -21,7 +21,9 @@ export const useWebRTCCall = ({ role, appointmentCode }) => {
     const socketRef = useRef(null);
     const peerConnectionRef = useRef(null);
     const localStreamRef = useRef(null);
+    const remoteStreamRef = useRef(null);
     const startedRef = useRef(false);
+    const callAttemptIdRef = useRef(0);
     const userIdRef = useRef(storageService.getEmail() || `${role}-${Date.now()}`);
 
     const resetConnection = useCallback(() => {
@@ -43,13 +45,14 @@ export const useWebRTCCall = ({ role, appointmentCode }) => {
             localStreamRef.current = null;
         }
 
-        if (remoteStream) {
-            remoteStream.getTracks().forEach((track) => track.stop());
+        if (remoteStreamRef.current) {
+            remoteStreamRef.current.getTracks().forEach((track) => track.stop());
+            remoteStreamRef.current = null;
         }
 
         setLocalStream(null);
         setRemoteStream(null);
-    }, [remoteStream]);
+    }, []);
 
     const createAndSendOffer = useCallback(async () => {
         const pc = peerConnectionRef.current;
@@ -68,6 +71,7 @@ export const useWebRTCCall = ({ role, appointmentCode }) => {
     }, [appointmentCode]);
 
     const leaveCall = useCallback(() => {
+        callAttemptIdRef.current += 1;
         startedRef.current = false;
         resetConnection();
         setCallState('idle');
@@ -77,6 +81,7 @@ export const useWebRTCCall = ({ role, appointmentCode }) => {
     const startCall = useCallback(async () => {
         if (startedRef.current) return;
         startedRef.current = true;
+        const callAttemptId = ++callAttemptIdRef.current;
 
         if (!appointmentCode) {
             setCallState('error');
@@ -95,6 +100,10 @@ export const useWebRTCCall = ({ role, appointmentCode }) => {
                 video: true,
                 audio: true,
             });
+            if (callAttemptIdRef.current !== callAttemptId || !startedRef.current) {
+                stream.getTracks().forEach((track) => track.stop());
+                return;
+            }
             localStreamRef.current = stream;
             setLocalStream(stream);
         } catch (error) {
@@ -118,6 +127,7 @@ export const useWebRTCCall = ({ role, appointmentCode }) => {
         pc.ontrack = (event) => {
             const [stream] = event.streams;
             if (stream) {
+                remoteStreamRef.current = stream;
                 setRemoteStream(stream);
                 setCallState('connected');
             }
@@ -136,12 +146,21 @@ export const useWebRTCCall = ({ role, appointmentCode }) => {
                 return;
             }
 
-            if (state === 'disconnected' || state === 'closed') {
+            if (state === 'disconnected') {
+                setCallState('connecting');
+                return;
+            }
+
+            if (state === 'closed') {
                 setCallState('waiting');
             }
         };
 
         const socket = createSocket();
+        if (callAttemptIdRef.current !== callAttemptId || !startedRef.current) {
+            socket.disconnect();
+            return;
+        }
         socketRef.current = socket;
 
         pc.onicecandidate = (event) => {
@@ -155,22 +174,26 @@ export const useWebRTCCall = ({ role, appointmentCode }) => {
         };
 
         socket.on('room-error', ({ code }) => {
+            if (callAttemptIdRef.current !== callAttemptId) return;
             setCallState('error');
             setErrorMessage(mapRoomErrorMessage(code));
         });
 
         socket.on('connect_error', () => {
+            if (callAttemptIdRef.current !== callAttemptId) return;
             setCallState('error');
             setErrorMessage('시그널링 서버 연결에 실패했습니다.');
         });
 
         socket.on('peer-joined', async () => {
+            if (callAttemptIdRef.current !== callAttemptId) return;
             if (role === 'admin') {
                 await createAndSendOffer();
             }
         });
 
         socket.on('webrtc-offer', async ({ sdp }) => {
+            if (callAttemptIdRef.current !== callAttemptId) return;
             if (role !== 'visitor') return;
 
             try {
@@ -191,6 +214,7 @@ export const useWebRTCCall = ({ role, appointmentCode }) => {
         });
 
         socket.on('webrtc-answer', async ({ sdp }) => {
+            if (callAttemptIdRef.current !== callAttemptId) return;
             if (role !== 'admin') return;
 
             try {
@@ -203,6 +227,7 @@ export const useWebRTCCall = ({ role, appointmentCode }) => {
         });
 
         socket.on('webrtc-ice-candidate', async ({ candidate }) => {
+            if (callAttemptIdRef.current !== callAttemptId) return;
             if (!candidate) return;
 
             try {
@@ -213,10 +238,12 @@ export const useWebRTCCall = ({ role, appointmentCode }) => {
         });
 
         socket.on('peer-left', () => {
+            if (callAttemptIdRef.current !== callAttemptId) return;
             setRemoteStream((prev) => {
                 if (prev) {
                     prev.getTracks().forEach((track) => track.stop());
                 }
+                remoteStreamRef.current = null;
                 return null;
             });
             setCallState('waiting');
@@ -230,6 +257,7 @@ export const useWebRTCCall = ({ role, appointmentCode }) => {
                 userId: userIdRef.current,
             },
             async (ack) => {
+                if (callAttemptIdRef.current !== callAttemptId) return;
                 if (!ack?.ok) {
                     setCallState('error');
                     setErrorMessage(mapRoomErrorMessage(ack?.code));

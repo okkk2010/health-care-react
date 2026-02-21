@@ -5,9 +5,23 @@ import { Server } from 'socket.io';
 
 const PORT = 4000;
 const CLIENT_ORIGIN = 'http://localhost:5173';
+const ALLOWED_ORIGINS = new Set([
+    CLIENT_ORIGIN,
+    'http://127.0.0.1:5173',
+    'http://localhost:4173',
+    'http://127.0.0.1:4173',
+]);
+
+const corsOrigin = (origin, callback) => {
+    if (!origin || ALLOWED_ORIGINS.has(origin)) {
+        callback(null, true);
+        return;
+    }
+    callback(new Error(`Origin not allowed: ${origin}`));
+};
 
 const app = express();
-app.use(cors({ origin: CLIENT_ORIGIN, credentials: true }));
+app.use(cors({ origin: corsOrigin, credentials: true }));
 app.get('/health', (_req, res) => {
     res.json({ ok: true });
 });
@@ -15,7 +29,7 @@ app.get('/health', (_req, res) => {
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
     cors: {
-        origin: CLIENT_ORIGIN,
+        origin: corsOrigin,
         methods: ['GET', 'POST'],
         credentials: true,
     },

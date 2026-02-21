@@ -53,12 +53,12 @@ const VideoVisitorPage = () => {
                 <p className='mt-2 text-sm text-slate-600'>예약 코드: {appointmentCode ?? '-'}</p>
 
                 <div className='mt-6 grid gap-4 md:grid-cols-2'>
-                    <div className='rounded-2xl border border-slate-200 bg-black p-2'>
-                        <video ref={remoteVideoRef} autoPlay playsInline className='h-[320px] w-full rounded-xl object-cover' />
-                    </div>
-
                     <div className='rounded-2xl border border-slate-200 bg-slate-900 p-2'>
                         <video ref={localVideoRef} autoPlay muted playsInline className='h-[320px] w-full rounded-xl object-cover' />
+                    </div>
+
+                    <div className='rounded-2xl border border-slate-200 bg-black p-2'>
+                        <video ref={remoteVideoRef} autoPlay playsInline className='h-[320px] w-full rounded-xl object-cover' />
                     </div>
                 </div>
 
