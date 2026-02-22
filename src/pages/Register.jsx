@@ -1,12 +1,17 @@
-import { useState } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { apiService } from '../services/api';
 
-const roles = ['patient', 'doctor'];
-const specialty = ['신경과', '외과', '소아과'];
+
 
 const Register = () => {
-    const [currentRole, setCurrentRole] = useState(roles[0]);
+
+    const [roles, setRoles] = useState([]);
+    const [specialties, setSpecialties] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+
+    const [currentRole, setCurrentRole] = useState('');
     const [currentSpecialty, setCurrentSpecialty] = useState('');
 
     const [form, setForm] = useState({
@@ -14,6 +19,37 @@ const Register = () => {
         name: '',
         password: ''
     });
+
+    useEffect(() => {
+        const fetchInitData = async () => {
+            try {
+                const [rolesRes, specsRes] = await Promise.all([
+                    apiService.getRolesAll(),
+                    apiService.getSpecialtiesAll(),
+                ]);
+
+                const roleList = rolesRes.data.data ?? [];
+                const specList = specsRes.data.data ?? [];
+
+                setRoles(roleList);
+                setSpecialties(specList);
+
+                if (roleList.length > 0) {
+                    setCurrentRole(roleList[0]);
+                }
+                if (specList.length > 0) {
+                    setCurrentSpecialty(specList[0]);
+                }
+                console.log('초기 데이터 로드 완료');
+            } catch (e) {
+                console.error('초기 데이터 로드 실패:', e);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        fetchInitData();
+    }, []);
 
     const handleChange = (e) => {
         setForm({
@@ -24,64 +60,95 @@ const Register = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        let response;
-        if (currentRole === 'doctor') {
-            const payload = {
-                email: form.email,
-                name: form.name,
-                password: form.password,
-                specialty: currentSpecialty,
-                role: currentRole
-            }
-            console.log(payload);
-            response = await apiService.doctorRegister(payload);
-        } else {
-            const payload = {
-                email: form.email,
-                name: form.name,
-                password: form.password,
-                role: currentRole
-            }
-            console.log(payload);
-            response = await apiService.patientRegister(payload);
-        }
 
-        if (response.status === 200) {
-            alert('회원가입 성공');
-        } else {
-            alert(response.data.message);
+        try {
+            let response;
+
+            const roleRes = await apiService.getRoleByName(currentRole);
+            const roleCode = roleRes.data.data;
+
+            if (currentRole === '의사') {
+                const specRes = await apiService.getSpecialtyByName(currentSpecialty);
+                const specialtyData = specRes.data.data;
+
+                const payload = {
+                    email: form.email,
+                    name: form.name,
+                    password: form.password,
+                    specialtyCode: specialtyData,
+                    roleCode: roleCode
+                }
+                console.log(payload);
+                response = await apiService.doctorRegister(payload);
+            } else {
+                const payload = {
+                    email: form.email,
+                    name: form.name,
+                    password: form.password,
+                    roleCode: roleCode
+                }
+                console.log(payload);
+                response = await apiService.patientRegister(payload);
+            }
+
+            if (response.data?.statusCode === 201 || response.status === 201 || response.status === 200) {
+                alert('회원가입 성공');
+                return;
+            }
+
+            alert(response.data?.message ?? '회원가입 실패');
+        } catch (error) {
+            const status = error?.status ?? error?.statusCode ?? 500;
+            const message = error?.message ?? '';
+            alert(`[${status}] ${message}`);
+            console.error('register error:', error);
         }
     }
-
     return (
-        <div>
-            <h1>Sign Up</h1>
-            <select value= {currentRole} onChange = {(e) => setCurrentRole(e.target.value)}>
-                {roles.map((role) => {
-                    return <option key = {role} value = {role}>{role}</option>
-                })}
-            </select>
-            <form >
-                <div>
-                    <p><label htmlFor='email'>email</label></p>
-                    <p><input id = 'email' type = 'text' placeholder='email' value={form.email} onChange={handleChange} name='email'/></p>
-                    <p><label htmlFor='name'>name</label></p>
-                    <p><input id = 'name' type = 'text' placeholder='name' value={form.name} onChange={handleChange} name='name'/></p>
-                    <p><label htmlFor='password'>password</label></p>
-                    <p><input id = 'password' type = 'password' placeholder='password' value={form.password} onChange={handleChange} name='password'/></p>
-                    { currentRole === 'doctor' &&
-                        <select value={currentSpecialty} onChange={(e) => setCurrentSpecialty(e.target.value)}>
-                            {specialty.map((exp) => {
-                                return <option key={exp} value={exp}>{exp}</option>
-                            })}
-                        </select>
-                    }
-                </div>
-                <br/>
-                <button type='submit' onClick={handleSubmit}>Sign Up</button>
-            </form>
-        </div>
+        <main className = 'min-h-screen bg-[#eef2f7] px-4 pb-8 pt-28  '>
+            <section className = 'shadow-sm mx-auto w-full max-w-md rounded-3xl border border-slate-100 bg-white p-8 '>
+                <h1 className = 'pb-4 mb-2 text-3xl font-bold text-slate-900 '>Sign Up</h1>
+                <section className =''>
+                    <form onSubmit={handleSubmit} className='space-y-5'>
+                        <div>
+                            <p><label htmlFor='role'>Role</label></p>
+                            <select value= {currentRole} onChange = {(e) => setCurrentRole(e.target.value)} 
+                                className='w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-800 outline-none transition focus:border-blue-500 focus:bg-white'>
+
+                                {roles?.map((role) => {
+                                    return <option key = {role} value = {role}>{role}</option>
+                                })}
+                            </select>
+                        </div>
+                        <div>
+                            <p><label htmlFor='email'>email</label></p>
+                            <p><input id = 'email' type = 'text' placeholder='email' value={form.email} onChange={handleChange} name='email'
+                                className='w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-800 outline-none transition focus:border-blue-500 focus:bg-white'/></p>
+                        </div>
+                        <div>
+                            <p><label htmlFor='name'>name</label></p>
+                            <p><input id = 'name' type = 'text' placeholder='name' value={form.name} onChange={handleChange} name='name'
+                                className='w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-800 outline-none transition focus:border-blue-500 focus:bg-white'/></p>
+                        </div>
+                        <div>
+                            <p><label htmlFor='password'>password</label></p>
+                            <p><input id = 'password' type = 'password' placeholder='password' value={form.password} onChange={handleChange} name='password'
+                                className='w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-800 outline-none transition focus:border-blue-500 focus:bg-white'/></p>
+                        </div>
+                        <div>
+                            { currentRole === '의사' &&
+                                <select value={currentSpecialty} onChange={(e) => setCurrentSpecialty(e.target.value)}>
+                                    {specialties?.map((exp) => {
+                                        return <option key={exp} value={exp}>{exp}</option>
+                                    })}
+                                </select>
+                            }
+                        </div>
+                        <button type='submit' className='border border-slate-500 px-4 py-2 mt-4 rounded-md bg-blue-600 text-white'>회원가입</button>
+                    </form>
+                </section>
+            </section>
+        </main>
     )
 }
 
