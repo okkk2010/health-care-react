@@ -26,6 +26,10 @@ const NavBar = ({ isLogin }) => {
                     <span className='text-xl font-extrabold tracking-tight text-slate-800'>HEALTH SYNC</span>
                 </Link>
 
+                <Link to='/TempRTC' className='rounded-md px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300'>
+                    TempRTC
+                </Link>
+
                 {
                     isLogin && (
                         (roleMenus[role] ?? []).map((menu) => (

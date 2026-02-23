@@ -13,6 +13,7 @@ import MyAppointment from './pages/patient/MyAppointment'
 import Appointment from './pages/Appointment'
 import CurrentAppointment from './pages/doctor/CurrentAppointment'
 import CheckAppointment from './pages/doctor/CheckAppointment'
+import TempRTC from './pages/TempRTC'
 import './App.css'
 
 function App() {
@@ -24,6 +25,9 @@ function App() {
       <NavBar isLogin={isLogin} />
       <Routes>
         <Route path='/' element={<Home />} />
+
+        {/* 임시 라우트 */}
+        <Route path='/TempRTC' element={<TempRTC />} />
 
         {/* 공통 라우트 */}
         <Route path='/Login' element={<Login setIsLogin={setIsLogin} />} />
