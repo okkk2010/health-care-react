@@ -282,3 +282,90 @@ export const useWebRTCCall = ({ role, appointmentCode }) => {
         leaveCall,
     };
 };
+
+let mediaRecorder;
+let chunks = [];
+let mixedAudioStream;
+let recordingAudioContext;
+
+const cleanupRecorderResources = () => {
+    if (mixedAudioStream) {
+        mixedAudioStream.getTracks().forEach((track) => track.stop());
+        mixedAudioStream = null;
+    }
+
+    if (recordingAudioContext) {
+        recordingAudioContext.close();
+        recordingAudioContext = null;
+    }
+
+    mediaRecorder = null;
+};
+
+export const startCallRecording = (localStream, remoteStream) => {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+        return false;
+    }
+
+    const localAudioTrack = localStream?.getAudioTracks?.()[0] ?? null;
+    const remoteAudioTrack = remoteStream?.getAudioTracks?.()[0] ?? null;
+
+    if (!localAudioTrack && !remoteAudioTrack) {
+        return false;
+    }
+
+    recordingAudioContext = new AudioContext();
+    const dest = recordingAudioContext.createMediaStreamDestination();
+
+    if (localAudioTrack) {
+        const localSource = recordingAudioContext.createMediaStreamSource(
+            new MediaStream([localAudioTrack])
+        );
+        localSource.connect(dest);
+    }
+    
+    if (remoteAudioTrack) {
+        const remoteSource = recordingAudioContext.createMediaStreamSource(
+            new MediaStream([remoteAudioTrack])
+        );
+        remoteSource.connect(dest);
+    }
+
+    mixedAudioStream = new MediaStream([...dest.stream.getAudioTracks()]);
+
+    if (!mixedAudioStream.getAudioTracks().length) {
+        cleanupRecorderResources();
+        return false;
+    }
+
+    mediaRecorder = MediaRecorder.isTypeSupported('audio/webm')
+        ? new MediaRecorder(mixedAudioStream, { mimeType: 'audio/webm' })
+        : new MediaRecorder(mixedAudioStream);
+    chunks = [];
+
+    mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunks.push(e.data);
+    };
+
+    mediaRecorder.start(1000);
+    return true;
+};
+
+export const stopCallRecording = () => {
+    return new Promise((resolve) => {
+        if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+            cleanupRecorderResources();
+            resolve(null);
+            return;
+        }
+
+        mediaRecorder.onstop = () => {
+            const blob = chunks.length ? new Blob(chunks, { type: 'audio/webm' }) : null;
+            chunks = [];
+            cleanupRecorderResources();
+            resolve(blob);
+        };
+
+        mediaRecorder.stop();
+    });
+};
